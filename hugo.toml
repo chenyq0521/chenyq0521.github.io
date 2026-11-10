@@ -1,0 +1,68 @@
+baseURL = "https://chenyq0521.github.io/"
+languageCode = "zh-cn"
+title = "陈豫祺的博客"
+theme = "PaperMod"
+
+enableRobotsTXT = true
+buildDrafts = false
+
+[pagination]
+  pagerSize = 10
+
+[outputs]
+  home = ["HTML", "RSS", "JSON"]
+
+[params]
+  defaultTheme = "auto"
+  ShowReadingTime = true
+  ShowShareButtons = true
+  ShowPostNavLinks = true
+  ShowBreadCrumbs = true
+  ShowCodeCopyButtons = true
+  ShowToc = true
+  TocOpen = false
+  fuseOpts = { isCaseSensitive = false, shouldSort = true, location = 0, distance = 1000, threshold = 0.4, minMatchCharLength = 0, keys = ["title", "permalink", "summary", "content"] }
+
+[params.homeInfoParams]
+  Title = "你好，我是陈豫祺"
+  Content = "长安大学软件工程专业本科生，方向为逆向工程与客户端安全。这里记录 Linux 课程实验、CTF 与安全研究笔记。"
+
+[[params.socialIcons]]
+  name = "github"
+  url = "https://github.com/chenyq0521"
+
+[[menu.main]]
+  identifier = "home"
+  name = "首页"
+  url = "/"
+  weight = 10
+
+[[menu.main]]
+  identifier = "about"
+  name = "关于"
+  url = "/about/"
+  weight = 20
+
+[[menu.main]]
+  identifier = "tags"
+  name = "标签"
+  url = "/tags/"
+  weight = 30
+
+[[menu.main]]
+  identifier = "categories"
+  name = "分类"
+  url = "/categories/"
+  weight = 40
+
+[[menu.main]]
+  identifier = "archives"
+  name = "归档"
+  url = "/archives/"
+  weight = 50
+
+[[menu.main]]
+  identifier = "search"
+  name = "搜索"
+  url = "/search/"
+  weight = 60
