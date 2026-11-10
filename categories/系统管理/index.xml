@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>系统管理 on 陈豫祺的博客</title><link>https://chenyq0521.github.io/categories/%E7%B3%BB%E7%BB%9F%E7%AE%A1%E7%90%86/</link><description>Recent content in 系统管理 on 陈豫祺的博客</description><generator>Hugo</generator><language>zh-cn</language><lastBuildDate>Mon, 02 Nov 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://chenyq0521.github.io/categories/%E7%B3%BB%E7%BB%9F%E7%AE%A1%E7%90%86/index.xml" rel="self" type="application/rss+xml"/><item><title>进程、端口与防火墙排查实验</title><link>https://chenyq0521.github.io/posts/experiment-3/</link><pubDate>Mon, 02 Nov 2026 00:00:00 +0000</pubDate><guid>https://chenyq0521.github.io/posts/experiment-3/</guid><description>&lt;h2 id="实验目的"&gt;实验目的&lt;/h2&gt;
+&lt;p&gt;掌握进程查看与信号控制、端口监听状态分析、防火墙规则检查，能独立定位&amp;quot;服务已启动但外部访问不到&amp;quot;的问题。&lt;/p&gt;
+&lt;h2 id="实验环境"&gt;实验环境&lt;/h2&gt;
+&lt;p&gt;Ubuntu 22.04.3 LTS。以 Hugo 本地服务为例：&lt;code&gt;hugo server --bind 0.0.0.0 --port 1313 -D&lt;/code&gt;。&lt;/p&gt;
+&lt;h2 id="实验步骤"&gt;实验步骤&lt;/h2&gt;
+&lt;h3 id="1-查看进程"&gt;1. 查看进程&lt;/h3&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;ps aux | grep -i hugo | grep -v grep
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;pgrep -af hugo
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;top -o %CPU &lt;span style="color:#75715e"&gt;# 按 CPU 排序，q 退出&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;code&gt;ps aux&lt;/code&gt; 各列含义：&lt;code&gt;USER PID %CPU %MEM VSZ RSS TTY STAT START TIME COMMAND&lt;/code&gt;，其中 &lt;code&gt;STAT&lt;/code&gt; 的 &lt;code&gt;S&lt;/code&gt; 为可中断睡眠、&lt;code&gt;R&lt;/code&gt; 为运行、&lt;code&gt;Z&lt;/code&gt; 为僵尸。&lt;/p&gt;
+&lt;h3 id="2-查看端口监听"&gt;2. 查看端口监听&lt;/h3&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;ss -tlnp | grep &lt;span style="color:#ae81ff"&gt;1313&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;# LISTEN 0 4096 0.0.0.0:1313 0.0.0.0:* users:((&amp;#34;hugo&amp;#34;,pid=1234,fd=7))&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;关键在本地地址一列：&lt;/p&gt;</description></item></channel></rss>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>Shell on 陈豫祺的博客</title><link>https://chenyq0521.github.io/tags/shell/</link><description>Recent content in Shell on 陈豫祺的博客</description><generator>Hugo</generator><language>zh-cn</language><lastBuildDate>Mon, 26 Oct 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://chenyq0521.github.io/tags/shell/index.xml" rel="self" type="application/rss+xml"/><item><title>Shell 脚本编程实验：日志备份脚本</title><link>https://chenyq0521.github.io/posts/experiment-2/</link><pubDate>Mon, 26 Oct 2026 00:00:00 +0000</pubDate><guid>https://chenyq0521.github.io/posts/experiment-2/</guid><description>&lt;h2 id="实验目的"&gt;实验目的&lt;/h2&gt;
+&lt;p&gt;掌握 Shell 脚本的变量、位置参数、条件判断、循环与函数，能编写带参数校验与日志输出的运维脚本，并用 &lt;code&gt;crontab&lt;/code&gt; 定时执行。&lt;/p&gt;
+&lt;h2 id="实验环境"&gt;实验环境&lt;/h2&gt;
+&lt;p&gt;Ubuntu 22.04.3 LTS，&lt;code&gt;/bin/bash&lt;/code&gt;，实验目录 &lt;code&gt;~/lab/shell&lt;/code&gt;。&lt;/p&gt;
+&lt;h2 id="实验步骤"&gt;实验步骤&lt;/h2&gt;
+&lt;h3 id="1-脚本骨架"&gt;1. 脚本骨架&lt;/h3&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;mkdir -p ~/lab/shell &lt;span style="color:#f92672"&gt;&amp;amp;&amp;amp;&lt;/span&gt; cd ~/lab/shell
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;vim backup.sh
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;#!/usr/bin/env bash
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;set -euo pipefail
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;SRC_DIR&lt;span style="color:#f92672"&gt;=&lt;/span&gt;&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;&lt;span style="color:#e6db74"&gt;${&lt;/span&gt;1&lt;span style="color:#66d9ef"&gt;:-&lt;/span&gt;&lt;span style="color:#e6db74"&gt;}&lt;/span&gt;&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;DST_DIR&lt;span style="color:#f92672"&gt;=&lt;/span&gt;&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;&lt;span style="color:#e6db74"&gt;${&lt;/span&gt;2&lt;span style="color:#66d9ef"&gt;:-&lt;/span&gt;$HOME/backup&lt;span style="color:#e6db74"&gt;}&lt;/span&gt;&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;STAMP&lt;span style="color:#f92672"&gt;=&lt;/span&gt;&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;&lt;span style="color:#66d9ef"&gt;$(&lt;/span&gt;date +%Y%m%d-%H%M%S&lt;span style="color:#66d9ef"&gt;)&lt;/span&gt;&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;LOG&lt;span style="color:#f92672"&gt;=&lt;/span&gt;&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;$DST_DIR&lt;span style="color:#e6db74"&gt;/backup.log&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;log&lt;span style="color:#f92672"&gt;()&lt;/span&gt; &lt;span style="color:#f92672"&gt;{&lt;/span&gt; printf &lt;span style="color:#e6db74"&gt;&amp;#39;[%s] %s\n&amp;#39;&lt;/span&gt; &lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;&lt;span style="color:#66d9ef"&gt;$(&lt;/span&gt;date &lt;span style="color:#e6db74"&gt;&amp;#39;+%F %T&amp;#39;&lt;/span&gt;&lt;span style="color:#66d9ef"&gt;)&lt;/span&gt;&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt; &lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;$*&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt; | tee -a &lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;$LOG&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;; &lt;span style="color:#f92672"&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#66d9ef"&gt;if&lt;/span&gt; &lt;span style="color:#f92672"&gt;[[&lt;/span&gt; -z &lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;$SRC_DIR&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt; &lt;span style="color:#f92672"&gt;]]&lt;/span&gt;; &lt;span style="color:#66d9ef"&gt;then&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; echo &lt;span style="color:#e6db74"&gt;&amp;#34;用法: &lt;/span&gt;$0&lt;span style="color:#e6db74"&gt; &amp;lt;源目录&amp;gt; [备份目录]&amp;#34;&lt;/span&gt; &amp;gt;&amp;amp;&lt;span style="color:#ae81ff"&gt;2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; exit &lt;span style="color:#ae81ff"&gt;1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#66d9ef"&gt;fi&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#66d9ef"&gt;if&lt;/span&gt; &lt;span style="color:#f92672"&gt;[[&lt;/span&gt; ! -d &lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;$SRC_DIR&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt; &lt;span style="color:#f92672"&gt;]]&lt;/span&gt;; &lt;span style="color:#66d9ef"&gt;then&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; echo &lt;span style="color:#e6db74"&gt;&amp;#34;错误: &lt;/span&gt;$SRC_DIR&lt;span style="color:#e6db74"&gt; 不是目录&amp;#34;&lt;/span&gt; &amp;gt;&amp;amp;&lt;span style="color:#ae81ff"&gt;2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; exit &lt;span style="color:#ae81ff"&gt;2&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#66d9ef"&gt;fi&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;mkdir -p &lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;$DST_DIR&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;ARCHIVE&lt;span style="color:#f92672"&gt;=&lt;/span&gt;&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;$DST_DIR&lt;span style="color:#e6db74"&gt;/backup-&lt;/span&gt;$STAMP&lt;span style="color:#e6db74"&gt;.tar.gz&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;log &lt;span style="color:#e6db74"&gt;&amp;#34;开始备份 &lt;/span&gt;$SRC_DIR&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;tar -czf &lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;$ARCHIVE&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt; -C &lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;&lt;span style="color:#66d9ef"&gt;$(&lt;/span&gt;dirname &lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;$SRC_DIR&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;&lt;span style="color:#66d9ef"&gt;)&lt;/span&gt;&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt; &lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;&lt;span style="color:#66d9ef"&gt;$(&lt;/span&gt;basename &lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;$SRC_DIR&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;&lt;span style="color:#66d9ef"&gt;)&lt;/span&gt;&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;log &lt;span style="color:#e6db74"&gt;&amp;#34;备份完成: &lt;/span&gt;$ARCHIVE&lt;span style="color:#e6db74"&gt; (&lt;/span&gt;&lt;span style="color:#66d9ef"&gt;$(&lt;/span&gt;du -h &lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;$ARCHIVE&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt; | cut -f1&lt;span style="color:#66d9ef"&gt;)&lt;/span&gt;&lt;span style="color:#e6db74"&gt;)&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;ls -1t &lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;$DST_DIR&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;/backup-*.tar.gz 2&amp;gt;/dev/null | tail -n +6 | &lt;span style="color:#66d9ef"&gt;while&lt;/span&gt; read -r old; &lt;span style="color:#66d9ef"&gt;do&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; rm -f &lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;$old&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt; &lt;span style="color:#f92672"&gt;&amp;amp;&amp;amp;&lt;/span&gt; log &lt;span style="color:#e6db74"&gt;&amp;#34;清理旧备份: &lt;/span&gt;&lt;span style="color:#66d9ef"&gt;$(&lt;/span&gt;basename &lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;$old&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;&lt;span style="color:#66d9ef"&gt;)&lt;/span&gt;&lt;span style="color:#e6db74"&gt;&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#66d9ef"&gt;done&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id="2-赋权并测试"&gt;2. 赋权并测试&lt;/h3&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;chmod +x backup.sh
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;./backup.sh &lt;span style="color:#75715e"&gt;# 缺参数，应提示用法并返回 1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;./backup.sh ~/lab/file &lt;span style="color:#75715e"&gt;# 正常备份&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;echo $? &lt;span style="color:#75715e"&gt;# 0&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;tail -n &lt;span style="color:#ae81ff"&gt;5&lt;/span&gt; ~/backup/backup.log
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;ls -lh ~/backup
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id="3-关键语法说明"&gt;3. 关键语法说明&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;set -euo pipefail&lt;/code&gt;：命令失败即退出、未定义变量报错、管道任一环节失败即失败，避免脚本&amp;quot;带病继续&amp;quot;。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;${1:-}&lt;/code&gt;：位置参数为空时给默认值，防止 &lt;code&gt;set -u&lt;/code&gt; 下取值报错。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;[[ -d ... ]]&lt;/code&gt;：判断目录是否存在，配合 &lt;code&gt;exit 2&lt;/code&gt; 区分&amp;quot;用法错误&amp;quot;与&amp;quot;环境错误&amp;quot;。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;tail -n +6&lt;/code&gt;：保留最新 5 个文件、删除其余，实现简易保留策略。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id="4-定时执行"&gt;4. 定时执行&lt;/h3&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"&gt;&lt;code class="language-bash" data-lang="bash"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;crontab -e
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;# 每天 02:30 备份一次&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#ae81ff"&gt;30&lt;/span&gt; &lt;span style="color:#ae81ff"&gt;2&lt;/span&gt; * * * /home/chenyq/lab/shell/backup.sh /home/chenyq/lab/file &amp;gt;&amp;gt; /home/chenyq/backup/cron.log 2&amp;gt;&amp;amp;&lt;span style="color:#ae81ff"&gt;1&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;crontab -l
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="结果分析"&gt;结果分析&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;参数校验与退出码区分是脚本可被自动化调用的前提，否则定时任务失败后无法定位。&lt;/li&gt;
+&lt;li&gt;使用 &lt;code&gt;tee&lt;/code&gt; 让日志同时写文件与屏幕，便于手工执行时观察。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;crontab&lt;/code&gt; 的环境变量极简，脚本内应使用绝对路径或自行 &lt;code&gt;source&lt;/code&gt; 环境。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="小结"&gt;小结&lt;/h2&gt;
+&lt;p&gt;脚本从&amp;quot;能跑&amp;quot;提升到&amp;quot;可维护&amp;quot;：加了校验、日志、保留策略与幂等判断，后续可扩展为带校验和的备份方案。&lt;/p&gt;</description></item></channel></rss>
